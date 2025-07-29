@@ -1,0 +1,56 @@
+fs = 1000;                   % Sampling frequency
+t = 0:1/fs:1;                % Time vector
+
+% Define carrier frequencies and amplitudes
+f1 = 50;   A1 = 0.6;         % First AM-FM signal
+f2 = 100;  A2 = 1.0;         % Second AM-FM signal
+f3 = 150;  A3 = 0.8;         % Third AM-FM signal
+
+% Define modulating frequencies (for both AM and FM)
+fm1 = 5;
+fm2 = 3;
+fm3 = 7;
+
+% Define modulation indices (for FM)
+beta1 = 4;
+beta2 = 6;
+beta3 = 5;
+
+% Construct AM-FM signals
+x1 = A1 * (1 + 0.5*sin(2*pi*fm1*t)) .* cos(2*pi*f1*t + beta1*sin(2*pi*fm1*t));
+x2 = A2 * (1 + 0.4*sin(2*pi*fm2*t)) .* cos(2*pi*f2*t + beta2*sin(2*pi*fm2*t));
+x3 = A3 * (1 + 0.3*sin(2*pi*fm3*t)) .* cos(2*pi*f3*t + beta3*sin(2*pi*fm3*t));
+
+% Combine signals
+x = x1 + x2 + x3;
+
+% Plot time-domain signal
+figure;
+plot(t, x);
+xlabel('Time (s)');
+ylabel('Amplitude');
+title('Three AM-FM Signals with Different Amplitudes and Frequencies');
+grid on;
+
+% Wigner-Ville Distribution (WVD)
+N = length(x);
+WVD = zeros(N, N);
+
+for n = 1:N
+    for tau = -floor(N/2):floor(N/2)-1
+        k = mod(n + tau - 1, N) + 1;
+        l = mod(n - tau - 1, N) + 1;
+
+        if k > 0 && l > 0 && k <= N && l <= N
+            WVD(n, tau + floor(N/2) + 1) = x(k) * conj(x(l));
+        end
+    end
+end
+
+% Plot WVD
+figure;
+imagesc(t, t, abs(WVD));
+xlabel('Time (s)');
+ylabel('Frequency (Hz)');
+title('Wigner-Ville Distribution of Three AM-FM Signals');
+colorbar;
