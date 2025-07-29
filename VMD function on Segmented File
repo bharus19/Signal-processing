@@ -1,0 +1,22 @@
+% Step 1: Load the WAV file
+[signal, fs] = audioread('segmentedFile.wav');
+
+% Convert to mono if stereo
+if size(signal,2) > 1
+    signal = mean(signal, 2);
+end
+
+% Normalize
+signal = signal / max(abs(signal));
+
+% Step 2: Apply built-in VMD
+[imf, residual] = vmd(signal, 'NumIMFs', 5, 'PenaltyFactor', 2000);
+
+% Step 3: Plot the IMFs
+figure;
+for k = 1:size(imf,2)
+    subplot(size(imf,2),1,k);
+    plot(imf(:,k));
+    title(['IMF ', num2str(k)]);
+end
+
