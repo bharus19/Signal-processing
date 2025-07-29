@@ -1,0 +1,41 @@
+[x, fs] = audioread('segmentedFile.wav');
+x = x(:,1);             % Use one channel
+x = x(1:fs);            % Optional: 1 second
+
+% VMD decomposition
+[imfs, residual] = vmd(x, 'NumIMFs', 5, 'InitializeMethod', 'random', 'Display', true);
+
+% Select an IMF — first one by default
+selected_imf = imfs(1, :);  % Adjust row/column indexing as needed
+
+% 8-PSK Modulation
+num_levels = 8;
+symbols = round(rescale(selected_imf, 0, num_levels - 1));  % Normalize to 0–7
+theta = (2*pi/num_levels) * symbols;
+modulated = exp(1j * theta);  % Manually create 8-PSK signal
+
+% IIR Filter via Difference Equation
+b = [0.2, 0.3, 0.2];    % Numerator
+a = [1, -0.4, 0.3];     % Denominator
+N = length(modulated);
+y = zeros(1, N);
+
+for n = 1:N
+    for k = 1:min(n, length(b))
+        y(n) = y(n) + b(k) * modulated(n - k + 1);
+    end
+    for k = 2:min(n, length(a))
+        y(n) = y(n) - a(k) * y(n - k + 1);
+    end
+end
+
+% Steady-State Output Visualization
+figure;
+subplot(2,1,1); plot(real(y)); title('Real Part of Output'); grid on;
+subplot(2,1,2); plot(imag(y)); title('Imaginary Part of Output'); grid on;
+
+% Frequency Response of Filter
+[H, w] = freqz(b, a, 1024);
+figure;
+subplot(2,1,1); plot(w/pi, abs(H)); title('Magnitude Response |H(e^{jω})|'); grid on;
+subplot(2,1,2); plot(w/pi, angle(H)); title('Phase Response ∠H(e^{jω})'); grid on;
